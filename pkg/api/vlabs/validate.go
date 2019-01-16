@@ -164,12 +164,15 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 	if !isUpdate {
 		switch o.OrchestratorType {
 		case DCOS:
-			version := common.RationalizeReleaseAndVersion(
+			version, err := common.RationalizeReleaseAndVersion(
 				o.OrchestratorType,
 				o.OrchestratorRelease,
 				o.OrchestratorVersion,
 				isUpdate,
 				false)
+			if err != nil {
+				return errors.Wrapf(err, "the following OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
+			}
 			if version == "" {
 				return errors.Errorf("the following OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
 			}
@@ -184,15 +187,18 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 		case Swarm:
 		case SwarmMode:
 		case Kubernetes:
-			version := common.RationalizeReleaseAndVersion(
+			version, err := common.RationalizeReleaseAndVersion(
 				o.OrchestratorType,
 				o.OrchestratorRelease,
 				o.OrchestratorVersion,
 				isUpdate,
 				a.HasWindows())
+			if err != nil {
+				return errors.Wrap(err, "The provided OrchestratorProfile configuration is not supported")
+			}
 			if version == "" && a.HasWindows() {
 				return errors.Errorf("the following OrchestratorProfile configuration is not supported with OsType \"Windows\": OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please use one of the following versions: %v", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion, common.GetAllSupportedKubernetesVersions(false, true))
-			} else if version == "" {
+			} else if version == "" { //TODO : remove and wrap error?
 				return errors.Errorf("the following OrchestratorProfile configuration is not supported: OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please use one of the following versions: %v", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion, common.GetAllSupportedKubernetesVersions(false, false))
 			}
 
@@ -299,17 +305,22 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 	} else {
 		switch o.OrchestratorType {
 		case DCOS, Kubernetes:
-
-			version := common.RationalizeReleaseAndVersion(
+			version, err := common.RationalizeReleaseAndVersion(
 				o.OrchestratorType,
 				o.OrchestratorRelease,
 				o.OrchestratorVersion,
 				false,
 				a.HasWindows())
+			if err != nil {
+				return errors.Wrapf(err, "the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", a.OrchestratorProfile.OrchestratorType, a.OrchestratorProfile.OrchestratorRelease, a.OrchestratorProfile.OrchestratorVersion)
+			}
 			if version == "" {
-				patchVersion := common.GetValidPatchVersion(o.OrchestratorType, o.OrchestratorVersion, isUpdate, a.HasWindows())
+				patchVersion, err := common.GetValidPatchVersion(o.OrchestratorType, o.OrchestratorVersion, isUpdate, a.HasWindows())
 				// if there isn't a supported patch version for this version fail
 				if patchVersion == "" {
+					if err != nil {
+						return errors.Wrapf(err, "the following OrchestratorProfile configuration is not supported: OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
+					}
 					if a.HasWindows() {
 						return errors.Errorf("the following OrchestratorProfile configuration is not supported with Windows agentpools: OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
 					}
@@ -505,12 +516,15 @@ func (a *Properties) validateAddons() error {
 				}
 			case "nvidia-device-plugin":
 				if to.Bool(addon.Enabled) {
-					version := common.RationalizeReleaseAndVersion(
+					version, err := common.RationalizeReleaseAndVersion(
 						a.OrchestratorProfile.OrchestratorType,
 						a.OrchestratorProfile.OrchestratorRelease,
 						a.OrchestratorProfile.OrchestratorVersion,
 						false,
 						false)
+					if err != nil {
+						return errors.Wrapf(err, "the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", a.OrchestratorProfile.OrchestratorType, a.OrchestratorProfile.OrchestratorRelease, a.OrchestratorProfile.OrchestratorVersion)
+					}
 					if version == "" {
 						return errors.Errorf("the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", a.OrchestratorProfile.OrchestratorType, a.OrchestratorProfile.OrchestratorRelease, a.OrchestratorProfile.OrchestratorVersion)
 					}
@@ -642,12 +656,15 @@ func (a *Properties) validateManagedIdentity() error {
 			a.OrchestratorProfile.KubernetesConfig.UseManagedIdentity
 
 		if useManagedIdentity {
-			version := common.RationalizeReleaseAndVersion(
+			version, err := common.RationalizeReleaseAndVersion(
 				a.OrchestratorProfile.OrchestratorType,
 				a.OrchestratorProfile.OrchestratorRelease,
 				a.OrchestratorProfile.OrchestratorVersion,
 				false,
 				false)
+			if err != nil {
+				return errors.Wrapf(err, "the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", a.OrchestratorProfile.OrchestratorType, a.OrchestratorProfile.OrchestratorRelease, a.OrchestratorProfile.OrchestratorVersion)
+			}
 			if version == "" {
 				return errors.Errorf("the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", a.OrchestratorProfile.OrchestratorType, a.OrchestratorProfile.OrchestratorRelease, a.OrchestratorProfile.OrchestratorVersion)
 			}
@@ -775,12 +792,15 @@ func (a *AgentPoolProfile) validateKubernetesDistro() error {
 
 func validateVMSS(o *OrchestratorProfile, isUpdate bool, storageProfile string) error {
 	if o.OrchestratorType == Kubernetes {
-		version := common.RationalizeReleaseAndVersion(
+		version, err := common.RationalizeReleaseAndVersion(
 			o.OrchestratorType,
 			o.OrchestratorRelease,
 			o.OrchestratorVersion,
 			isUpdate,
 			false)
+		if err != nil {
+			return errors.Wrapf(err, "the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
+		}
 		if version == "" {
 			return errors.Errorf("the following OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
 		}
@@ -819,12 +839,15 @@ func (a *AgentPoolProfile) validateWindows(o *OrchestratorProfile, w *WindowsPro
 	case Swarm:
 	case SwarmMode:
 	case Kubernetes:
-		version := common.RationalizeReleaseAndVersion(
+		version, err := common.RationalizeReleaseAndVersion(
 			o.OrchestratorType,
 			o.OrchestratorRelease,
 			o.OrchestratorVersion,
 			isUpdate,
 			true)
+		if err != nil {
+			return errors.Wrapf(err, "the following user supplied OrchestratorProfile configuration is not supported: OrchestratorType: %s, OrchestratorRelease: %s, OrchestratorVersion: %s. Please check supported Release or Version for this build of aks-engine", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion)
+		}
 		if version == "" {
 			return errors.Errorf("Orchestrator %s version %s does not support Windows", o.OrchestratorType, o.OrchestratorVersion)
 		}

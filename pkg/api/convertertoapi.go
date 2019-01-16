@@ -565,7 +565,8 @@ func convertV20170701OrchestratorProfile(v20170701cs *v20170701.OrchestratorProf
 
 	switch api.OrchestratorType {
 	case Kubernetes:
-		api.OrchestratorVersion = common.RationalizeReleaseAndVersion(Kubernetes, "", v20170701cs.OrchestratorVersion, isUpdate, hasWindows)
+		api.OrchestratorVersion, _ = common.RationalizeReleaseAndVersion(Kubernetes, "", v20170701cs.OrchestratorVersion, isUpdate, hasWindows)
+		//TODO : handle error?
 		if api.OrchestratorVersion == "" {
 			api.OrchestratorVersion = common.GetDefaultKubernetesVersion(hasWindows)
 		}
@@ -591,23 +592,26 @@ func convertVLabsOrchestratorProfile(vp *vlabs.Properties, api *OrchestratorProf
 			convertVLabsKubernetesConfig(vlabscs.KubernetesConfig, api.KubernetesConfig)
 		}
 		setVlabsKubernetesDefaults(vp, api)
-		api.OrchestratorVersion = common.RationalizeReleaseAndVersion(
+		orchVersion, _ := common.RationalizeReleaseAndVersion(
 			vlabscs.OrchestratorType,
 			vlabscs.OrchestratorRelease,
 			vlabscs.OrchestratorVersion,
 			isUpdate,
 			vp.HasWindows())
+		//TODO:handle error to fail fast. what happens if orchVersion is still ""?
+		api.OrchestratorVersion = orchVersion
 	case DCOS:
 		if vlabscs.DcosConfig != nil {
 			api.DcosConfig = &DcosConfig{}
 			convertVLabsDcosConfig(vlabscs.DcosConfig, api.DcosConfig)
 		}
-		api.OrchestratorVersion = common.RationalizeReleaseAndVersion(
+		api.OrchestratorVersion, _ = common.RationalizeReleaseAndVersion(
 			vlabscs.OrchestratorType,
 			vlabscs.OrchestratorRelease,
 			vlabscs.OrchestratorVersion,
 			isUpdate,
 			false)
+		//TODO:handle error to fail fast. what happens if orchVersion is still ""?
 	}
 }
 

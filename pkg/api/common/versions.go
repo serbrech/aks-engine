@@ -278,7 +278,7 @@ func GetSupportedVersions(orchType string, isUpdate, hasWindows bool) (versions 
 }
 
 //GetValidPatchVersion gets the current valid patch version for the minor version of the passed in version
-func GetValidPatchVersion(orchType, orchVer string, isUpdate, hasWindows bool) string {
+func GetValidPatchVersion(orchType, orchVer string, isUpdate, hasWindows bool) (string, error) {
 	if orchVer == "" {
 		return RationalizeReleaseAndVersion(
 			orchType,
@@ -289,48 +289,56 @@ func GetValidPatchVersion(orchType, orchVer string, isUpdate, hasWindows bool) s
 	}
 
 	// check if the current version is valid, this allows us to have multiple supported patch versions in the future if we need it
-	version := RationalizeReleaseAndVersion(
+	version, err := RationalizeReleaseAndVersion(
 		orchType,
 		"",
 		orchVer,
 		isUpdate,
 		hasWindows)
 
+	if err != nil {
+		return "", err
+	}
+
 	if version == "" {
 		sv, err := semver.Make(orchVer)
 		if err != nil {
-			return ""
+			return "", err
 		}
 		sr := fmt.Sprintf("%d.%d", sv.Major, sv.Minor)
 
-		version = RationalizeReleaseAndVersion(
+		version, err = RationalizeReleaseAndVersion(
 			orchType,
 			sr,
 			"",
 			isUpdate,
 			hasWindows)
+		if err != nil {
+			return "", err
+		}
 	}
-	return version
+	return version, nil
 }
 
 // RationalizeReleaseAndVersion return a version when it can be rationalized from the input, otherwise ""
-func RationalizeReleaseAndVersion(orchType, orchRel, orchVer string, isUpdate, hasWindows bool) (version string) {
+func RationalizeReleaseAndVersion(orchType, orchRel, orchVer string, isUpdate, hasWindows bool) (version string, err error) {
 	// ignore "v" prefix in orchestrator version and release: "v1.8.0" is equivalent to "1.8.0", "v1.9" is equivalent to "1.9"
 	orchVer = strings.TrimPrefix(orchVer, "v")
 	orchRel = strings.TrimPrefix(orchRel, "v")
+	err = nil
 	supportedVersions, defaultVersion := GetSupportedVersions(orchType, isUpdate, hasWindows)
 	if supportedVersions == nil {
-		return ""
+		return "", err
 	}
 
 	if orchRel == "" && orchVer == "" {
-		return defaultVersion
+		return defaultVersion, err
 	}
 
 	if orchVer == "" {
 		// Try to get latest version matching the release
 		version = GetLatestPatchVersion(orchRel, supportedVersions)
-		return version
+		return version, nil
 	} else if orchRel == "" {
 		// Try to get version the same with orchVer
 		version = ""
@@ -340,7 +348,10 @@ func RationalizeReleaseAndVersion(orchType, orchRel, orchVer string, isUpdate, h
 				break
 			}
 		}
-		return version
+		if version == "" {
+			return "", fmt.Errorf("The OrchestratorRelease you provided is not supported : %s", orchVer)
+		}
+		return version, nil
 	}
 	// Try to get latest version matching the release
 	version = ""
@@ -352,7 +363,11 @@ func RationalizeReleaseAndVersion(orchType, orchRel, orchVer string, isUpdate, h
 			break
 		}
 	}
-	return version
+	if version == "" {
+		return "", fmt.Errorf("The combination of orchestrator version and orchestrator release that you provided is not supported : %s.%s", orchRel, orchVer)
+	}
+
+	return version, nil
 }
 
 // IsKubernetesVersionGe returns true if actualVersion is greater than or equal to version

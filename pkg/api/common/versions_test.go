@@ -326,33 +326,48 @@ func TestGetVersionsBetween(t *testing.T) {
 }
 
 func Test_GetValidPatchVersion(t *testing.T) {
-	v := GetValidPatchVersion(Kubernetes, "", false, false)
+	v, err := GetValidPatchVersion(Kubernetes, "", false, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if v != GetDefaultKubernetesVersion(false) {
 		t.Errorf("It is not the default Kubernetes version")
 	}
 
 	for version, enabled := range AllKubernetesSupportedVersions {
 		if enabled {
-			v = GetValidPatchVersion(Kubernetes, version, false, false)
+			v, err = GetValidPatchVersion(Kubernetes, version, false, false)
+			if err != nil {
+				t.Error(err)
+			}
 			if v != version {
 				t.Errorf("Expected version %s, instead got version %s", version, v)
 			}
 		}
 	}
 
-	v = GetValidPatchVersion(Kubernetes, "", true, true)
+	v, err = GetValidPatchVersion(Kubernetes, "", true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if v != GetDefaultKubernetesVersion(true) {
 		t.Errorf("It is not the default Kubernetes version")
 	}
 
-	v = GetValidPatchVersion(Mesos, "1.6.0", false, false)
+	v, err = GetValidPatchVersion(Mesos, "1.6.0", false, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if v != "" {
 		t.Errorf("Expected empty version for unsupported orchType")
 	}
 
 	for version, enabled := range AllKubernetesWindowsSupportedVersions {
 		if enabled {
-			v = GetValidPatchVersion(Kubernetes, version, false, true)
+			v, err = GetValidPatchVersion(Kubernetes, version, false, true)
+			if err != nil {
+				t.Error(err)
+			}
 			if v != version {
 				t.Errorf("Expected version %s, instead got version %s", version, v)
 			}
@@ -456,87 +471,130 @@ func TestGetMinMaxVersion(t *testing.T) {
 }
 
 func Test_RationalizeReleaseAndVersion(t *testing.T) {
-	version := RationalizeReleaseAndVersion(Kubernetes, "", "", false, false)
+	version, err := RationalizeReleaseAndVersion(Kubernetes, "", "", false, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != GetDefaultKubernetesVersion(false) {
 		t.Errorf("It is not the default Kubernetes version")
 	}
 
 	latest1Dot6Version := GetLatestPatchVersion("1.6", GetAllSupportedKubernetesVersions(true, false))
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.6", "", true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.6", "", true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != latest1Dot6Version {
 		t.Errorf("It is not Kubernetes version %s", latest1Dot6Version)
 	}
 
 	expectedVersion := "1.7.16"
-	version = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.7", expectedVersion, true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.7", expectedVersion, true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "v1.7", "v"+expectedVersion, true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "v1.7", "v"+expectedVersion, true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", true, false)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", true, false)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != "" {
 		t.Errorf("It is not empty string")
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", true, false)
-	if version != "" {
-		t.Errorf("It is not empty string")
+	//TODO : Review behavior. should fail IMO
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", true, false)
+	if err == nil {
+		t.Error("Should fail because release and version explicitely provided are incompatible.")
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "", true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "", "", true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != GetDefaultKubernetesVersion(true) {
 		t.Errorf("It is not the default Windows Kubernetes version")
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.5", "", true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.5", "", true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != "" {
 		t.Errorf("It is not empty string")
 	}
 
 	expectedVersion = "1.8.12"
-	version = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "", expectedVersion, true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.8", expectedVersion, true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.8", expectedVersion, true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "", "v"+expectedVersion, true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "v1.8", "v"+expectedVersion, true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "v1.8", "v"+expectedVersion, true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != expectedVersion {
 		t.Errorf("It is not Kubernetes version %s", expectedVersion)
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", true, true)
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.1", "", true, true)
+	if err != nil {
+		t.Error(err)
+	}
 	if version != "" {
 		t.Errorf("It is not empty string")
 	}
 
-	version = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", true, true)
-	if version != "" {
-		t.Errorf("It is not empty string")
+	version, err = RationalizeReleaseAndVersion(Kubernetes, "1.1", "1.6.6", true, true)
+	if err == nil {
+		t.Error("Should fail because release and version explicitely provided are incompatible.")
 	}
 }
 
