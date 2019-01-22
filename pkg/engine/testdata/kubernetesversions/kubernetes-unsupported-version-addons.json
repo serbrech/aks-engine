@@ -3,7 +3,7 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease":"1.10.8",
+      "orchestratorVersion":"1.10.8",
       "kubernetesConfig": {
         "addons": [
           {
@@ -15,7 +15,7 @@
     },
     "masterProfile": {
       "count": 1,
-      "dnsPrefix": "",
+      "dnsPrefix": "unsupported",
       "vmSize": "Standard_DS2_v2"
     },
     "agentPoolProfiles": [

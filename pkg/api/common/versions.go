@@ -297,9 +297,12 @@ func GetValidPatchVersion(orchType, orchVer string, isUpdate, hasWindows bool) (
 		hasWindows)
 
 	if err != nil {
-		return "", err
+		//Do nothing, this keeps the previous behavior
 	}
 
+	//if the version provided was unsupported, try to find an appropriate version for the same.
+	//i.e : 1.10.8 -> unsupported, look for supported version in 1.10 release
+	//TODO : is that what we want?
 	if version == "" {
 		sv, err := semver.Make(orchVer)
 		if err != nil {
