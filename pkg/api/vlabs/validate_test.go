@@ -642,7 +642,7 @@ func TestProperties_ValidateLinuxProfile(t *testing.T) {
 func TestProperties_ValidateInvalidExtensions(t *testing.T) {
 
 	p := getK8sDefaultProperties(true)
-	p.OrchestratorProfile.OrchestratorVersion = "1.10.7"
+	p.OrchestratorProfile.OrchestratorVersion = "1.10.9" // needs to be a valid k8s version
 
 	p.AgentPoolProfiles = []*AgentPoolProfile{
 		{

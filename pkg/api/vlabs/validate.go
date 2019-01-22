@@ -194,7 +194,7 @@ func (a *Properties) validateOrchestratorProfile(isUpdate bool) error {
 				isUpdate,
 				a.HasWindows())
 			if err != nil {
-				return errors.Wrap(err, "The provided OrchestratorProfile configuration is not supported")
+				return errors.Wrapf(err, "the following OrchestratorProfile configuration is not supported: OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please use one of the following versions: %v", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion, common.GetAllSupportedKubernetesVersions(false, false))
 			}
 			if version == "" && a.HasWindows() {
 				return errors.Errorf("the following OrchestratorProfile configuration is not supported with OsType \"Windows\": OrchestratorType: \"%s\", OrchestratorRelease: \"%s\", OrchestratorVersion: \"%s\". Please use one of the following versions: %v", o.OrchestratorType, o.OrchestratorRelease, o.OrchestratorVersion, common.GetAllSupportedKubernetesVersions(false, true))
